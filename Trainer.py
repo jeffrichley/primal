@@ -1,7 +1,10 @@
+import datetime
 import numpy as np
 import tensorflow as tf
 
 from RL_Stuff import ActorCriticModel
+
+
 # from supervised import create_supervised_nn
 
 class Trainer:
@@ -33,6 +36,17 @@ class Trainer:
 
         # self.supervised_model = create_supervised_nn(self.state_shape, self.goal_shape, self.num_actions)
         self.model = model
+
+        # adding Tensorboard metrics
+        self.train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
+        self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('train_accuracy')
+        self.train_value_accuracy = tf.keras.metrics.MeanRelativeError(normalizer=[[1]], name='value_accuracy')
+
+        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        train_log_dir = f"./logs/{current_time}/train"
+        self.train_summary_writier = tf.summary.create_file_writer(train_log_dir)
+
+        self.training_step = 0
 
     def get_reward(self, asset_number, state):
 
@@ -92,7 +106,8 @@ class Trainer:
 
         # we pad everything with 0's except we need the barrier layer to be padded with 1's
         padded = np.pad(data, ((0, 0), (radius, radius), (radius, radius)), 'constant', constant_values=(0, 0))
-        padded[3, :, :] = np.pad(data[3, :, :], ((radius, radius), (radius, radius)), 'constant', constant_values=(1, 1))
+        padded[3, :, :] = np.pad(data[3, :, :], ((radius, radius), (radius, radius)), 'constant',
+                                 constant_values=(1, 1))
 
         # figure out where to slice
         offset_asset_location = (asset_location[0] + radius + 1, asset_location[1] + radius + 1)
@@ -117,7 +132,7 @@ class Trainer:
         # need to get a unit vector towards the goal
         dy = goal[0] - asset_location[0]
         dx = goal[1] - asset_location[1]
-        magnitude = (dy**2 + dx**2)**0.5
+        magnitude = (dy ** 2 + dx ** 2) ** 0.5
 
         if magnitude != 0:
             goal_vector = (dy / magnitude, dx / magnitude)
@@ -128,6 +143,8 @@ class Trainer:
 
     def train(self):
 
+        self.training_step += 1
+
         # TODO: for now we will just train with all data, perhaps we should just sample a certain number
         data = self.memory.sample_memory(self.training_size)
 
@@ -137,7 +154,22 @@ class Trainer:
         cur_actions = np.array([o[2] for o in data])
         rewards = np.array([o[3] for o in data])
 
-        self.model.train_imitation(cur_states, cur_goals, cur_actions, rewards)
+        self.model.train_imitation(cur_states, cur_goals, cur_actions, rewards,
+                                   train_loss_logger=self.train_loss,
+                                   train_accuracy_logger=self.train_accuracy,
+                                   train_value_accuracy_logger=self.train_value_accuracy)
+
+        # self.train_loss(loss_average)
+        # self.train_accuracy(correct_action, policy)
+
+        with self.train_summary_writier.as_default():
+            tf.summary.scalar('loss', self.train_loss.result(), step=self.training_step)
+            tf.summary.scalar('action accuracy', self.train_accuracy.result(), step=self.training_step)
+            tf.summary.scalar('value error', self.train_value_accuracy.result(), step=self.training_step)
+
+            self.train_loss.reset_states()
+            self.train_accuracy.reset_states()
+            self.train_value_accuracy.reset_states()
 
     def save_model(self, file_name):
         self.model.save_weights(file_name, overwrite=True)

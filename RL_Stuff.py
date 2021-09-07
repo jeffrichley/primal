@@ -1,5 +1,3 @@
-import datetime
-
 import tensorflow as tf
 # import tensorflow_probability as tfp
 from tensorflow import keras
@@ -78,13 +76,7 @@ class ActorCriticModel(keras.Model):
         # on_goal output
         # self.goal_output = layers.Dense(1, activation='sigmoid')
 
-        # adding Tensorboard metrics
-        self.train_loss = tf.keras.metrics.Mean('train_loss', dtype=tf.float32)
-        self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy('train_accuracy')
 
-        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        train_log_dir = f"./logs/{current_time}/train"
-        self.train_summary_writier = tf.summary.create_file_writer(train_log_dir)
 
 
 
@@ -201,7 +193,7 @@ class ActorCriticModel(keras.Model):
         return loss
 
 
-    def train_imitation(self, cur_states, cur_goals, cur_actions, returns):
+    def train_imitation(self, cur_states, cur_goals, cur_actions, returns, train_loss_logger=None, train_accuracy_logger=None, train_value_accuracy_logger=None):
         self.global_step = self.global_step + 1
         count_steps = 0
 
@@ -215,7 +207,7 @@ class ActorCriticModel(keras.Model):
 
                 with tf.GradientTape() as tape:
                     tape.watch(self.trainable_variables)   # keep track of the trainable variables (don't always need all of them)
-                    loss = self._get_imitation_loss(state, cur_goal, correct_action, return_)
+                    loss = self._get_imitation_loss(state, cur_goal, correct_action, return_, train_accuracy_logger, train_value_accuracy_logger)
                     grads = tape.gradient(loss, self.trainable_variables)  # get_gradients (backprop) from losses
 
                     tb_losses.append(loss)
@@ -224,15 +216,18 @@ class ActorCriticModel(keras.Model):
                 grads, _ = tf.clip_by_global_norm(grads, self.max_grad_norm)
                 self.optimizer.apply_gradients(zip(grads, self.trainable_variables))  # change weights based on gradients
 
-        tb_loss_average = sum(tb_losses) / len(tb_losses)
-        self.train_loss(tb_loss_average)
+        if train_loss_logger is not None:
+            # tb_loss_average = sum(tb_losses) / len(tb_losses)
+            train_loss_logger(tb_losses)
 
-        step = self.global_step.numpy()
-        with self.train_summary_writier.as_default():
-            tf.summary.scalar('loss', self.train_loss.result(), step=step)
-            tf.summary.scalar('accuracy', self.train_accuracy.result(), step=step)
+        # step = self.global_step.numpy()
+        # with self.train_summary_writier.as_default():
+        #     tf.summary.scalar('loss', self.train_loss.result(), step=step)
+        #     tf.summary.scalar('accuracy', self.train_accuracy.result(), step=step)
 
-    def _get_imitation_loss(self, state, cur_goal, correct_action, return_):
+        # return tb_loss_average
+
+    def _get_imitation_loss(self, state, cur_goal, correct_action, return_, train_accuracy_logger=None, train_value_accuracy_logger=None):
 
         state = tf.reshape(state, [self.mini_batch_size, self.network_depth, self.network_height, self.network_width])
         cur_goal = tf.reshape(cur_goal, [self.mini_batch_size, 2])
@@ -245,8 +240,11 @@ class ActorCriticModel(keras.Model):
         l_imitation = tf.reduce_mean(keras.losses.categorical_crossentropy(useable_actions, policy))
 
         # logging for tensorboard
-        # self.train_accuracy(useable_actions, policy)
-        self.train_accuracy(correct_action, policy)
+        if train_accuracy_logger is not None:
+            train_accuracy_logger(correct_action, policy)
+
+        if train_value_accuracy_logger is not None:
+            train_value_accuracy_logger(return_.numpy(), value.numpy())
 
         # l_value = tf.reduce_mean(tf.pow(return_ - value, 2))
         l_value = tf.reduce_mean(tf.pow(tf.subtract(tf.cast(return_, tf.double), tf.cast(value, tf.double)), 2))
