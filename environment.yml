@@ -1,0 +1,10 @@
+name: primal
+dependencies:
+  - python=3.8
+  - numpy
+  - matplotlib
+  - tensorflow
+  - tqdm
+  - pip:
+      - pyyaml
+      - pygame
