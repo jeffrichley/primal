@@ -49,7 +49,7 @@ class Visualizer:
 
         self.flip()
 
-    def visualize_combined_state(self, state):
+    def visualize_combined_state(self, state, file_name=None):
         # make sure it has been initialized, be we don't want to unless this is called
         from matplotlib import pyplot as plt
 
@@ -61,7 +61,11 @@ class Visualizer:
             data[locations[0], locations[1], :] = self.colors[key]
 
         plt.imshow(data, interpolation='nearest')
-        plt.show()
+
+        if file_name is not None:
+            plt.savefig(file_name)
+        else:
+            plt.show()
 
     def reset(self):
         # we haven't been told we need to visualize anything yet

@@ -7,15 +7,15 @@ class BasicSimulator():
         self.state = state
 
         # screen information
-        self.width = width
-        self.height = height
+        # self.width = width
+        # self.height = height
 
         # sim information
-        self.barrier_locations = state.barrier_locations
-        self.asset_locations = state.asset_locations
-        self.ally_locations = state.ally_locations
-        self.enemy_locations = state.enemy_locations
-        self.goal_locations = state.goal_locations
+        # self.barrier_locations = state.barrier_locations
+        # self.asset_locations = state.asset_locations
+        # self.ally_locations = state.ally_locations
+        # self.enemy_locations = state.enemy_locations
+        # self.goal_locations = state.goal_locations
 
         # get the field ready to play
         self.state.reset_state()

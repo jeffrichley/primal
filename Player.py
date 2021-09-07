@@ -5,7 +5,7 @@ from tqdm import tqdm
 from PathingExpert import a_star
 
 
-trainer, simulator, state, visualizer, memory = TrainingFactory.create(config_file='./configs/training.yml')
+trainer, simulator, state, visualizer, memory, tester = TrainingFactory.create(config_file='./configs/training.yml')
 
 trainer.load_model('./data/primal_weights_9900')
 

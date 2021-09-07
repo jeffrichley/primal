@@ -5,8 +5,9 @@ from PrimalState import PrimalState
 from Trainer import Trainer
 from Visualizer import Visualizer
 from RL_Stuff import ActorCriticModel
+from Tester import PrimalTester
 
-def create(config_file):
+def create(config_file, create_state=True):
 
     # Read the yml config file
     with open(config_file, 'r') as stream:
@@ -18,7 +19,10 @@ def create(config_file):
         memory = WorkingMemory(memory_size)
 
         # create and configure the state
-        state = PrimalState(config)
+        if create_state:
+            state = PrimalState(config)
+        else:
+            state = None
 
         # create and configure the simulator
         simulator_config = config['simulator']
@@ -32,10 +36,11 @@ def create(config_file):
         model = ActorCriticModel(trainer_config)
 
         # create and configure the trainer
-
         trainer = Trainer(trainer_config, memory, simulator, state, model)
 
         # create and configure the visualizer
         visualizer = Visualizer(config['visualization'])
 
-    return trainer, simulator, state, visualizer, memory
+        tester = PrimalTester(trainer, simulator, state, model)
+
+    return trainer, simulator, state, visualizer, memory, tester
