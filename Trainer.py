@@ -159,9 +159,6 @@ class Trainer:
                                    train_accuracy_logger=self.train_accuracy,
                                    train_value_accuracy_logger=self.train_value_accuracy)
 
-        # self.train_loss(loss_average)
-        # self.train_accuracy(correct_action, policy)
-
         with self.train_summary_writier.as_default():
             tf.summary.scalar('loss', self.train_loss.result(), step=self.training_step)
             tf.summary.scalar('action accuracy', self.train_accuracy.result(), step=self.training_step)

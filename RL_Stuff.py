@@ -117,7 +117,7 @@ class ActorCriticModel(keras.Model):
         return policy, value#, goal
 
     # @tf.function
-    def train(self, states, returns, advantages, is_valid, cur_goals):#, goals, goal_guesses):
+    def train(self, states, returns, advantages, is_valid, cur_goals):
         self.global_step = self.global_step + 1
         count_steps = 0
         # PPO EPOCHS is the number of times we will go through ALL the training data to make updates
@@ -167,7 +167,7 @@ class ActorCriticModel(keras.Model):
 
 
 
-    def _get_loss(self, state, return_, advantage, is_valid, cur_goal):#, on_goal, goal_guess):
+    def _get_loss(self, state, return_, advantage, is_valid, cur_goal):
 
         # breakpoint()
 
@@ -251,7 +251,6 @@ class ActorCriticModel(keras.Model):
 
         return tf.add(tf.multiply(self.critic_discount, l_value), tf.cast(l_imitation, tf.double))
         # return self.critic_discount * l_value + l_imitation
-
 
     def _ppo_imitation_iterator(self, cur_states, cur_goals, cur_actions, returns):
         batch_size = len(cur_states)
