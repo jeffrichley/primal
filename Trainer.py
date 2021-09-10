@@ -1,4 +1,6 @@
 import datetime
+import random
+
 import numpy as np
 import tensorflow as tf
 
@@ -18,6 +20,11 @@ class Trainer:
         self.ppo_epochs = config['ppo-epochs']
         self.max_grad_norm = config['max-grad-norm']
         self.training_size = config['training-size']
+        self.gae_gamma = config['gae-gamma']
+        self.gae_lambda = config['gae-lambda']
+        self.epsilon = config['epsilon']
+        self.epsilon_decay = config['epsilon-decay']
+        self.test_frequency = config['test-frequency']
 
         self.asset_visible_window = config['asset-visible-window']
 
@@ -168,6 +175,15 @@ class Trainer:
             self.train_accuracy.reset_states()
             self.train_value_accuracy.reset_states()
 
+        self.epsilon *= self.epsilon_decay
+
+    def train_rl(self, states, returns, advantages, is_valid, cur_goals):
+
+
+        self.model.train_rl(states, returns, advantages, is_valid, cur_goals)
+
+        self.epsilon *= self.epsilon_decay
+
     def save_model(self, file_name):
         self.model.save_weights(file_name, overwrite=True)
 
@@ -187,5 +203,36 @@ class Trainer:
         action = np.argmax(policy.numpy())
 
         # print(answers)
+
+        return action, value
+
+    def normalize_returns(self, x):
+
+        x -= np.mean(x)
+        x /= (np.std(x) + 1e-8)
+
+        return x
+
+    def compute_gae(self, next_value, rewards, masks, values):
+
+        values = values + [next_value]
+        gae = 0
+        returns = []
+        for step in reversed(range(len(rewards))):
+            # delta = rewards[step] + (gamma * values[step + 1] * masks[step] - values[step])
+            delta = rewards[step] + (self.gae_gamma * values[step + 1] - values[step])
+            # gae = delta + gamma * lam * masks[step] * gae
+            gae = delta + self.gae_gamma * self.gae_lambda * gae
+            # prepend to get correct order back
+            returns.insert(0, gae + values[step])
+
+        return returns
+
+    def epsilon_greedy_action(self, predicted_action, num_actions=5):
+        r = random.random()
+        if r < self.epsilon:
+            action = random.randint(0, num_actions - 1)
+        else:
+            action = predicted_action
 
         return action

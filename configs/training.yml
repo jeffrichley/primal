@@ -36,6 +36,11 @@ trainer:
   valid-discount: 0.5
   entropy-beta: 0.01
   asset-visible-window: 11
+  gae-gamma: 0.99
+  gae-lambda: 0.95
+  epsilon: 0.9996
+  epsilon-decay: 0.9996
+  test-frequency: 100
 
   rewards:
     basic-step: -0.3

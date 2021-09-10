@@ -41,7 +41,7 @@ while going:
         else:
             going = True
 
-            action_number = trainer.predict_action(state, dude_num)
+            action_number, value = trainer.predict_action(state, dude_num)
 
             move = FOUR_CONNECTED_MOVES[action_number]
 

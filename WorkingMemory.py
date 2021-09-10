@@ -30,3 +30,6 @@ class WorkingMemory:
 
     def num_samples(self):
         return len(self.memory)
+
+    def reset(self):
+        self.memory = []

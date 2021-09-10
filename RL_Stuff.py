@@ -117,7 +117,7 @@ class ActorCriticModel(keras.Model):
         return policy, value#, goal
 
     # @tf.function
-    def train(self, states, returns, advantages, is_valid, cur_goals):
+    def train_rl(self, states, returns, advantages, is_valid, cur_goals):
         self.global_step = self.global_step + 1
         count_steps = 0
         # PPO EPOCHS is the number of times we will go through ALL the training data to make updates
@@ -171,8 +171,11 @@ class ActorCriticModel(keras.Model):
 
         # breakpoint()
 
-        state = tf.reshape(state, [32,30,30,7])
-        cur_goal = tf.reshape(cur_goal, [32,2])
+        # state = tf.reshape(state, [32,30,30,7])
+        # cur_goal = tf.reshape(cur_goal, [32,2])
+
+        state = tf.reshape(state, [self.mini_batch_size, self.network_depth, self.network_height, self.network_width])
+        cur_goal = tf.reshape(cur_goal, [self.mini_batch_size, 2])
 
         policy, value = self.call([state, cur_goal])
         l_value = tf.reduce_mean(tf.pow(return_ - value, 2))
@@ -262,18 +265,4 @@ class ActorCriticModel(keras.Model):
 
 
 
-# def normalize(x):
-#     x -= np.mean(x)
-#     x /= (np.std(x) + 1e-8)
-#     return x
 
-# def compute_gae(next_value, rewards, masks, values, gamma=GAMMA, lam=GAE_LAMBDA):
-#     values = values + [next_value]
-#     gae = 0
-#     returns = []
-#     for step in reversed(range(len(rewards))):
-#         delta = rewards[step] + (gamma * values[step + 1] * masks[step] - values[step]) # r+td_error
-#         gae = delta + gamma * lam * masks[step] * gae
-#         # prepend to get correct order back
-#         returns.insert(0, gae + values[step])
-#     return returns
