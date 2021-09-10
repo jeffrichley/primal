@@ -170,6 +170,7 @@ class Trainer:
             tf.summary.scalar('loss', self.train_loss.result(), step=self.training_step)
             tf.summary.scalar('action accuracy', self.train_accuracy.result(), step=self.training_step)
             tf.summary.scalar('value error', self.train_value_accuracy.result(), step=self.training_step)
+            tf.summary.scalar('epsilon', data=self.epsilon, step=self.training_step)
 
             self.train_loss.reset_states()
             self.train_accuracy.reset_states()
@@ -179,6 +180,7 @@ class Trainer:
 
     def train_rl(self, states, returns, advantages, is_valid, cur_goals):
 
+        self.training_step += 1
 
         self.model.train_rl(states, returns, advantages, is_valid, cur_goals)
 

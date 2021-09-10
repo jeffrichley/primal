@@ -55,10 +55,10 @@ def train_rl(state, simulator, visualizer, trainer, memory):
                 # moved = simulator.move_asset(dude_num, new_location)
 
                 valid_moves = [1 for i in range(num_actions)]
-                for i in range(1, num_actions):
+                for i in range(num_actions):
                     test_move = FOUR_CONNECTED_MOVES[i]
                     test_location = (asset[0] + test_move[0], asset[1] + test_move[1])
-                    valid_moves[i] = int(simulator.valid_action(test_location))
+                    valid_moves[i] = int(simulator.valid_action(dude_num, test_location))
 
                 predicted_action, value = trainer.predict_action(state, dude_num)
                 action = trainer.epsilon_greedy_action(predicted_action)

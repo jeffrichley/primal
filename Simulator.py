@@ -23,17 +23,20 @@ class BasicSimulator():
     def move_asset(self, asset_number, new_location):
         # we need to make sure it is an empty location before we accept the move
         moved = True
-        if self.valid_action(new_location):
+        if self.valid_action(asset_number, new_location):
             self.state.move_asset(asset_number, new_location)
         else:
             moved = False
 
         return moved
 
-    def valid_action(self, new_location):
+    def valid_action(self, asset_number, new_location):
 
         y = new_location[0]
         x = new_location[1]
-        return self.state.is_empty_location(y, x)
+
+        asset_y, asset_x = self.state.get_asset_location(asset_number)
+
+        return (y == asset_y and x == asset_x) or self.state.is_empty_location(y, x)
 
 
