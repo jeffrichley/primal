@@ -7,7 +7,7 @@ from PathingExpert import a_star
 
 trainer, simulator, state, visualizer, memory, tester = TrainingFactory.create(config_file='./configs/training.yml')
 
-trainer.load_model('./data/primal_weights_6000')
+trainer.load_model('./data/primal_weights_6200')
 
 visualizer.visualize(state=state, show=True)
 
