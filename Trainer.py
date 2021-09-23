@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 import tensorflow as tf
+import scipy.signal as signal
 
 from RL_Stuff import ActorCriticModel
 
@@ -215,20 +216,56 @@ class Trainer:
 
         return x
 
+
+
+
+
+
+
+
+    def discount(self, x, gamma):
+        return signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
+
+    def good_discount(self, x, gamma):
+        return self.discount(x, gamma)
+
     def compute_gae(self, next_value, rewards, masks, values):
 
         values = values + [next_value]
-        gae = 0
-        returns = []
-        for step in reversed(range(len(rewards))):
-            # delta = rewards[step] + (gamma * values[step + 1] * masks[step] - values[step])
-            delta = rewards[step] + (self.gae_gamma * values[step + 1] - values[step])
-            # gae = delta + gamma * lam * masks[step] * gae
-            gae = delta + self.gae_gamma * self.gae_lambda * gae
-            # prepend to get correct order back
-            returns.insert(0, gae + values[step])
+        # gae = 0
+        # returns = []
+        # for step in reversed(range(len(rewards))):
+        #     # delta = rewards[step] + (gamma * values[step + 1] * masks[step] - values[step])
+        #     delta = rewards[step] + (self.gae_gamma * values[step + 1] - values[step])
+        #     # gae = delta + gamma * lam * masks[step] * gae
+        #     gae = delta + self.gae_gamma * self.gae_lambda * gae
+        #     # prepend to get correct order back
+        #     returns.insert(0, gae + values[step])
 
-        return returns
+        # return returns
+
+        # TODO: bootrap_value
+        # self.rewards_plus = np.asarray(rewards.tolist() + [bootstrap_value])
+        rewards_plus = rewards
+        # discounted_rewards = discount(self.rewards_plus, gamma)[:-1]
+        gamma = .95
+        discounted_rewards = self.discount(rewards_plus, gamma)[:-1]
+        # self.value_plus = np.asarray(values.tolist() + [bootstrap_value])
+        value_plus = np.asarray(values)
+        # value_plus = values
+        # advantages = rewards + gamma * self.value_plus[1:] - self.value_plus[:-1]
+        advantages = rewards + gamma * value_plus[1:] - value_plus[:-1]
+        # advantages = good_discount(advantages, gamma)
+        advantages = self.good_discount(advantages, gamma)[0, 0, :].astype(np.float32)
+
+        # advantages = np.reshape(advantages, [200, 1, 1]).tolist()
+        advantages = np.reshape(advantages, [len(advantages), 1, 1])
+
+
+        return advantages
+
+
+
 
     def epsilon_greedy_action(self, predicted_action, num_actions=5):
         r = random.random()

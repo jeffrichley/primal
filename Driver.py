@@ -3,7 +3,7 @@ from tqdm import tqdm
 import TrainingFactory
 from DriverUtils import train_imitation, train_rl
 
-imitation_probability = 0.30
+imitation_probability = 0.50
 # imitation_probability = 1.0
 
 trainer, simulator, state, visualizer, memory, tester = TrainingFactory.create(config_file='./configs/training.yml')

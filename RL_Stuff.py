@@ -178,14 +178,23 @@ class ActorCriticModel(keras.Model):
         cur_goal = tf.reshape(cur_goal, [self.mini_batch_size, 2])
 
         policy, value = self.call([state, cur_goal])
-        l_value = tf.reduce_mean(tf.pow(return_ - value, 2))
+        # l_value = tf.reduce_mean(tf.pow(return_ - value, 2))
+        l_value = tf.reduce_mean(tf.pow(tf.cast(return_, dtype=tf.float32) - value, 2))
 
-        l_entropy = -tf.reduce_mean(policy*tf.math.log(tf.clip_by_value(policy, 1e-10, 1)))
 
-        l_policy = -tf.reduce_mean(tf.math.log(tf.clip_by_value(tf.convert_to_tensor(np.array([[np.max(i)] for i in policy])), 1e-10, 1.0)) * advantage)
+
+        # l_entropy = -tf.reduce_mean(policy*tf.math.log(tf.clip_by_value(policy, 1e-10, 1)))
+        l_entropy = -tf.reduce_mean(policy * tf.math.log(tf.clip_by_value(policy, 1e-7, 1)))
+
+        # l_policy = -tf.reduce_mean(tf.math.log(tf.clip_by_value(tf.convert_to_tensor(np.array([[np.max(i)] for i in policy])), 1e-10, 1.0)) * advantage)
+        # l_policy = -tf.reduce_mean(tf.math.log(tf.clip_by_value(tf.convert_to_tensor(np.array([[np.max(i)] for i in policy])), 1e-7, 1.0)) * advantage)
+        l_policy = -tf.reduce_mean(tf.math.log(tf.clip_by_value(tf.convert_to_tensor(np.array([[np.max(i)] for i in policy])), 1e-7, 1.0)) * tf.cast(advantage, tf.float32))
+
+
 
         legal_policy = tf.cast(tf.convert_to_tensor(is_valid), tf.float32)
-        valid_policys = tf.clip_by_value(policy, 1e-10, 1.0-1e-10)
+        # valid_policys = tf.clip_by_value(policy, 1e-10, 1.0-1e-10)
+        valid_policys = tf.clip_by_value(policy, 1e-7, 1.0 - 1e-7)
         l_valid = -tf.reduce_mean(tf.math.log(valid_policys)*legal_policy + tf.math.log(1-valid_policys) * (1-legal_policy)) # cross entropy for illegal moves
 
         # l_goal = -tf.reduce_mean(on_goal*tf.math.log(tf.clip_by_value(goal_guess,1e-10,1.0))\
